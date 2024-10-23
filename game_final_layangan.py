@@ -60,9 +60,9 @@ layangan_selected = 0  # Layangan Default
 player_image = layangan_image[layangan_selected]  # Gunakan langsung gambar yang sudah dimuat
 player_image = pg.transform.scale(player_image, (50, 50))  # Ubah ukuran gambar sesuai kebutuhan
 
-speed = 10  # Kecepatan gerakan horizontal
-gravity = 0.5  # Percepatan gravitasi
-jump_strength = -5  # Kekuatan lompatan
+speed = 15  # Kecepatan gerakan horizontal
+gravity = 1.0  # Percepatan gravitasi
+jump_strength = -10  # Kekuatan lompatan
 horizontal_jump_speed = 5  # Kecepatan horizontal saat melompat
 vertical_velocity = 0  # Kecepatan gerakan vertikal
 player_y = 400  # Posisi awal vertikal pemain
@@ -76,7 +76,7 @@ running = True
 player_x = 200
 
 # Timer untuk lompatan
-jump_cooldown = 3000  # Cooldown dalam milidetik (3 detik = 3000 ms)
+jump_cooldown = 250  # Cooldown dalam milidetik (0.5 detik = 500 ms)
 last_jump_time = 0  # Waktu terakhir pemain melompat
 
 # Clock pygame
@@ -128,8 +128,10 @@ while running:
             player_x += speed * dt / 1000  # Gerakan ke kanan
 
         # Lompatan
-        if keys[pg.K_SPACE]:  # Lompatan hanya saat menyentuh tanah
+        current_time = pg.time.get_ticks()  # Mendapatkan waktu saat ini dalam milidetik
+        if keys[pg.K_SPACE] and (pg.time.get_ticks() - last_jump_time > jump_cooldown):  # Lompatan hanya saat cooldown sudah habis
             vertical_velocity = jump_strength  # Lompat
+            last_jump_time = pg.time.get_ticks()  # Perbarui waktu terakhir lompatan
             if facing_left:
                 player_x -= horizontal_jump_speed  # Gerak ke kiri saat melompat
             else:
@@ -147,9 +149,9 @@ while running:
         # Gerakan horizontal saat jatuh berdasarkan arah hadap
         if vertical_velocity != 0:  # Saat pemain dalam keadaan jatuh
             if facing_left:
-                player_x -= speed * dt / 1000  # Gerak ke kiri saat jatuh
+                player_x -= horizontal_jump_speed * dt / 100  # Gerak ke kiri saat jatuh
             else:
-                player_x += speed * dt / 1000  # Gerak ke kanan saat jatuh
+                player_x += horizontal_jump_speed * dt / 100  # Gerak ke kanan saat jatuh
 
         # Membalikkan sprite jika perlu
         if facing_left:

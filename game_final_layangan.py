@@ -3,7 +3,10 @@ import random as ran
 
 pg.init()  # Inisialisasi pygame
 
-screen = pg.display.set_mode((800, 600))  # Konfigurasi ukuran jendela game
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+
+screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))  # Konfigurasi ukuran jendela game
 pg.display.set_caption("Perang Layangan")  # Konfigurasi nama jendela game
 
 # Memanggil file gambar background
@@ -14,11 +17,11 @@ cloud2_sprite = pg.image.load("Clouds5/5.png")
 cloud_moving_sprite = pg.image.load("Clouds5/3.png")  
 
 # Mengubah resolusi gambar sesuai ukuran jendela game
-background_image = pg.transform.scale(background_image, (800, 600))  
-moon_sprite = pg.transform.scale(moon_sprite, (800, 600))  
-cloud1_sprite = pg.transform.scale(cloud1_sprite, (800, 600))  
-cloud2_sprite = pg.transform.scale(cloud2_sprite, (800, 600))  
-cloud_moving_sprite = pg.transform.scale(cloud_moving_sprite, (800, 600))  
+background_image = pg.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))  
+moon_sprite = pg.transform.scale(moon_sprite, (SCREEN_WIDTH, SCREEN_HEIGHT))  
+cloud1_sprite = pg.transform.scale(cloud1_sprite, (SCREEN_WIDTH, SCREEN_HEIGHT))  
+cloud2_sprite = pg.transform.scale(cloud2_sprite, (SCREEN_WIDTH, SCREEN_HEIGHT))  
+cloud_moving_sprite = pg.transform.scale(cloud_moving_sprite, (SCREEN_WIDTH, SCREEN_HEIGHT))  
 
 cloud_moving_x = -cloud_moving_sprite.get_width()  
 cloud_moving_y = ran.randint(0, 100)
@@ -33,8 +36,8 @@ def draw_start_menu():  # Fungsi untuk menampilkan menu awal
     font = pg.font.SysFont('arial', 40)
     title = font.render('Perang Layangan', True, (49, 76, 102))
     start_button = font.render('Mulai', True, (49, 76, 102))
-    screen.blit(title, (800 / 2 - title.get_width() / 2, 600 / 2 - title.get_height() / 2 - 20))
-    screen.blit(start_button, (800 / 2 - start_button.get_width() / 2, 600 / 2 + start_button.get_height() / 2 + 20))
+    screen.blit(title, (SCREEN_WIDTH / 2 - title.get_width() / 2, SCREEN_HEIGHT / 2 - title.get_height() / 2 - 20))
+    screen.blit(start_button, (SCREEN_WIDTH / 2 - start_button.get_width() / 2, SCREEN_HEIGHT / 2 + start_button.get_height() / 2 + 20))
     pg.display.update()
 
 def draw_game_over_screen():  # Fungsi untuk menampilkan menu game over
@@ -43,9 +46,9 @@ def draw_game_over_screen():  # Fungsi untuk menampilkan menu game over
     title = font.render('Game Over', True, (255, 255, 255))
     restart_button = font.render('R - Restart', True, (255, 255, 255))
     quit_button = font.render('Q - Quit', True, (255, 255, 255))
-    screen.blit(title, (800/2 - title.get_width()/2, 600/2 - title.get_height()/3))
-    screen.blit(restart_button, (800/2 - restart_button.get_width()/2, 600/1.9 + restart_button.get_height()))
-    screen.blit(quit_button, (800/2 - quit_button.get_width()/2, 600/2 + quit_button.get_height()/2))
+    screen.blit(title, (SCREEN_WIDTH/2 - title.get_width()/2, SCREEN_HEIGHT/2 - title.get_height()/3))
+    screen.blit(restart_button, (SCREEN_WIDTH/2 - restart_button.get_width()/2, SCREEN_HEIGHT/1.9 + restart_button.get_height()))
+    screen.blit(quit_button, (SCREEN_WIDTH/2 - quit_button.get_width()/2, SCREEN_HEIGHT/2 + quit_button.get_height()/2))
     pg.display.update()
 
 layangan_image = [
@@ -57,27 +60,71 @@ layangan_image = [
 
 layangan_selected = 0  # Layangan Default
 
-player_image = layangan_image[layangan_selected]  # Gunakan langsung gambar yang sudah dimuat
-player_image = pg.transform.scale(player_image, (50, 50))  # Ubah ukuran gambar sesuai kebutuhan
+class Layangan:
+    def __init__(self, image, x, y, speed=15, gravity=1.0, jump_strength=-10, max_jumps=2):
+        self.image = pg.transform.scale(image, (50, 50))
+        self.x = x
+        self.y = y
+        self.speed = speed
+        self.gravity = gravity
+        self.jump_strength = jump_strength
+        self.vertical_velocity = 0
+        self.facing_left = True
+        self.on_ground = True
+        self.horizontal_jump_speed = 5
+        self.jump_cooldown = 250
+        self.last_jump_time = 0
+        self.jumps_left = max_jumps  # Jumlah lompatan tersisa yang diizinkan
+        self.max_jumps = max_jumps  # Lompatan maksimal sebelum menyentuh tanah
+    
+    def move_left(self, dt):
+        self.facing_left = True
+        self.x -= self.speed * dt / 1000
 
-speed = 15  # Kecepatan gerakan horizontal
-gravity = 1.0  # Percepatan gravitasi
-jump_strength = -10  # Kekuatan lompatan
-horizontal_jump_speed = 5  # Kecepatan horizontal saat melompat
-vertical_velocity = 0  # Kecepatan gerakan vertikal
-player_y = 400  # Posisi awal vertikal pemain
+    def move_right(self, dt):
+        self.facing_left = False
+        self.x += self.speed * dt / 1000
 
-facing_left = True  # Variabel untuk menyimpan nilai apakah gambar menghadap kiri
+    def jump(self):
+        current_time = pg.time.get_ticks()
+        if self.jumps_left > 0 and current_time - self.last_jump_time > self.jump_cooldown:
+            self.vertical_velocity = self.jump_strength
+            self.last_jump_time = current_time
+    
+    def apply_gravity(self):
+        self.vertical_velocity += self.gravity
+        self.y += self.vertical_velocity
+        if self.y >= 550:  # Ground limit
+            self.y = 550
+            self.vertical_velocity = 0
+            self.on_ground = True
+            self.jumps_left = self.max_jumps  # Reset lompatan saat menyentuh tanah
+        else:
+            self.on_ground = False
+    
+    def update(self, dt):
+        # Gravity effect
+        self.apply_gravity()
 
-music_volume = 0.5  # Variabel yang menampung nilai untuk volume musik
-pg.mixer.music.set_volume(music_volume)  # Mengatur Volume Musik pada Game Berdasarkan Nilai yang diberikan pengguna ke variabel music_volume
+        # Horizontal movement when jumping
+        if self.vertical_velocity != 0:
+            if self.facing_left:
+                self.x -= self.horizontal_jump_speed * dt / 100
+            else:
+                self.x += self.horizontal_jump_speed * dt / 100
+
+    def draw(self, screen):
+        # Flip image if facing left
+        image_to_draw = pg.transform.flip(self.image, True, False) if self.facing_left else self.image
+        screen.blit(image_to_draw, (self.x, self.y))
+
+
+# Player and enemy initialization using Layangan class
+player = Layangan(layangan_image[layangan_selected], 200, 400)  # Initial position
+enemy = Layangan(layangan_image[ran.randint(0, 3)], 600, 400)  # Random enemy
+enemy_direction = 1  # 1 for right, -1 for left
 
 running = True
-player_x = 200
-
-# Timer untuk lompatan
-jump_cooldown = 250  # Cooldown dalam milidetik (0.5 detik = 500 ms)
-last_jump_time = 0  # Waktu terakhir pemain melompat
 
 # Clock pygame
 clock = pg.time.Clock()
@@ -96,7 +143,7 @@ while running:
 
     cloud_moving_x += cloud_speed  # Menggerakkan awan ke kanan
 
-    if cloud_moving_x > 800:  # Jika awan keluar layar, awan kembali ke awal
+    if cloud_moving_x > SCREEN_WIDTH:  # Jika awan keluar layar, awan kembali ke awal
         cloud_moving_x = -cloud_moving_sprite.get_width()
         cloud_moving_y = ran.randint(0, 100)
 
@@ -108,7 +155,7 @@ while running:
     if game_state == "start_menu":
         draw_start_menu()
         if keys[pg.K_SPACE]:
-            player_x, player_y = 200, 400
+            player.x, player.y = (SCREEN_WIDTH//2), SCREEN_HEIGHT//2
             game_state = "game"
             game_over = False
     elif game_state == "game_over":
@@ -119,50 +166,36 @@ while running:
             pg.quit()
             quit()
     elif game_state == "game":
-        # Gerakan kiri dan kanan menggunakan keyboard (untuk mengganti arah hadap)
+        # Gerakan kiri dan kanan menggunakan keyboard untuk player
         if keys[pg.K_LEFT]:
-            facing_left = True  # Ganti arah hadap ke kiri
-            player_x -= speed * dt / 1000  # Gerakan ke kiri
+            player.move_left(dt)
         if keys[pg.K_RIGHT]:
-            facing_left = False  # Ganti arah hadap ke kanan
-            player_x += speed * dt / 1000  # Gerakan ke kanan
+            player.move_right(dt)
 
         # Lompatan
-        current_time = pg.time.get_ticks()  # Mendapatkan waktu saat ini dalam milidetik
-        if keys[pg.K_SPACE] and (pg.time.get_ticks() - last_jump_time > jump_cooldown):  # Lompatan hanya saat cooldown sudah habis
-            vertical_velocity = jump_strength  # Lompat
-            last_jump_time = pg.time.get_ticks()  # Perbarui waktu terakhir lompatan
-            if facing_left:
-                player_x -= horizontal_jump_speed  # Gerak ke kiri saat melompat
-            else:
-                player_x += horizontal_jump_speed  # Gerak ke kanan saat melompat
+        if keys[pg.K_SPACE]:
+            player.jump()  # Memanggil fungsi lompatan jika tombol spasi ditekan
 
-        # Mengaplikasikan gravitasi
-        vertical_velocity += gravity
-        player_y += vertical_velocity
+        # Update posisi dan gerakan player
+        player.update(dt)
 
-        # Batas bawah layar
-        if player_y >= 550:  # Jika menyentuh tanah
-            player_y = 550
-            vertical_velocity = 0  # Reset kecepatan vertikal saat menyentuh tanah
+        # Gerakan acak musuh
+        enemy.x += enemy_direction * 3  # Gerakan musuh
+        if enemy.x < 0 or enemy.x > SCREEN_WIDTH - enemy.image.get_width():  # Bounce back
+            enemy_direction *= -1  # Ubah arah gerakan musuh
+        enemy.update(dt)  # Update enemy
 
-        # Gerakan horizontal saat jatuh berdasarkan arah hadap
-        if vertical_velocity != 0:  # Saat pemain dalam keadaan jatuh
-            if facing_left:
-                player_x -= horizontal_jump_speed * dt / 100  # Gerak ke kiri saat jatuh
-            else:
-                player_x += horizontal_jump_speed * dt / 100  # Gerak ke kanan saat jatuh
+        # Deteksi kolisi antara player dan enemy
+        if (player.x < enemy.x + enemy.image.get_width() and
+            player.x + player.image.get_width() > enemy.x and
+            player.y < enemy.y + enemy.image.get_height() and
+            player.y + player.image.get_height() > enemy.y):
+            game_state = "game_over"  # Set game state to game over jika terjadi kolisi
 
-        # Membalikkan sprite jika perlu
-        if facing_left:
-            player_image = pg.transform.flip(layangan_image[layangan_selected], True, False)
-        else:
-            player_image = layangan_image[layangan_selected]
+        # Gambar player dan musuh
+        player.draw(screen)
+        enemy.draw(screen)
 
-        # Menampilkan pemain di layar
-        screen.blit(player_image, (player_x, player_y))
+    pg.display.update()  # Update tampilan game
 
-    # Mengupdate tampilan
-    pg.display.flip()
-
-pg.quit()  # Menghentikan pygame
+pg.quit()  # Keluar dari game

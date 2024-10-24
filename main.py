@@ -33,6 +33,7 @@ cloud_moving_y = ran.randint(0, 100)
 cloud_speed = 1  # Kecepatan gerak gambar awan
 
 bgm = pg.mixer.Sound(".\\assets\\music\\menu_music.mp3")  # Memanggil file musik
+bgm.set_volume(0.5)
 bgm.play(-1)  # Memainkan musik secara loop
 
 game_over_sound = pg.mixer.Sound(".\\assets\\music\\game_over.mp3")

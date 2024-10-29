@@ -209,11 +209,22 @@ class Player(pg.sprite.Sprite):
             health_text = font.render(f'Health: {self.health}', True, (RED))
         screen.blit(health_text, (10, 10))  # Tampilkan nyawa di sudut kiri atas
 
+    def draw_line(self, screen):
+        # Menggambar garis dari titik bawah layangan ke posisi lebih rendah
+        if self.facing_left == True:
+            start_pos = (self.rect.centerx + 15, self.rect.bottom - 10)
+        else:
+            start_pos = (self.rect.centerx - 15, self.rect.bottom - 10)
+        end_pos = (self.rect.centerx, SCREEN_HEIGHT)  # Panjang tali layangan
+        pg.draw.line(screen, BLACK, start_pos, end_pos, 2)  # Tali berwarna hitam, tebal 2px
+
     def draw(self, screen):
         # Flip image if facing left
         image_to_draw = pg.transform.flip(self.image, True, False) if self.facing_left else self.image
         screen.blit(image_to_draw, self.rect.topleft)
+        self.draw_line(screen)  # Menggambar tali layangan
 
+# Kelas untuk layangan
 class Enemy(pg.sprite.Sprite):
     def __init__(self, image):
         super().__init__()
@@ -224,6 +235,8 @@ class Enemy(pg.sprite.Sprite):
 
         # Tentukan arah awal: 1 untuk ke kanan, -1 untuk ke kiri
         self.direction = ran.choice([-1, 1])
+        self.facing_left = self.direction == -1  # Tentukan apakah menghadap kiri
+
         if self.direction == 1:  # Jika bergerak ke kanan
             self.rect.x = -self.image.get_width()  # Muncul dari kiri
         else:  # Jika bergerak ke kiri
@@ -232,7 +245,7 @@ class Enemy(pg.sprite.Sprite):
     def update(self):
         self.rect.x += self.speed * self.direction  # Menggerakkan musuh secara horizontal
 
-        # Jika musuh keluar layar, reset posisi
+        # Jika musuh keluar layar, hapus dan spawn baru
         if self.rect.right < 0 or self.rect.left > SCREEN_WIDTH:
             self.reset_position()
 
@@ -240,13 +253,15 @@ class Enemy(pg.sprite.Sprite):
         # Mengatur ulang posisi x dan y untuk kemunculan kembali
         self.rect.y = ran.randint(0, SCREEN_HEIGHT - 75)  # Posisi y acak
         self.direction *= -1  # Ubah arah bergerak
+        self.facing_left = self.direction == -1  # Perbarui arah
 
         # Jika bergerak ke kanan, mulai dari kiri; jika ke kiri, mulai dari kanan
         if self.direction == 1:
             self.rect.x = -self.image.get_width()  # Muncul dari kiri
         else:
             self.rect.x = SCREEN_WIDTH  # Muncul dari kanan
-        self.speed = ran.randint(5, 10)  # Kecepatan acak untuk gerakan berikutnya
+
+        self.speed = ran.randint(1, 5)  # Kecepatan acak untuk gerakan berikutnya
 
     def check_collision(self, player):
         if self.rect.colliderect(player.rect):  # Periksa tabrakan
@@ -254,8 +269,15 @@ class Enemy(pg.sprite.Sprite):
                 return True  # Tanda bahwa game over
         return False  # Masih hidup
 
+    def draw_line(self, screen):
+        # Menggambar garis dari titik bawah layangan ke posisi lebih rendah
+        start_pos = (self.rect.centerx - 15, self.rect.bottom - 10)
+        end_pos = (self.rect.centerx, SCREEN_HEIGHT)  # Panjang tali layangan
+        pg.draw.line(screen, BLACK, start_pos, end_pos, 2)  # Tali berwarna hitam, tebal 2px
+
     def draw(self, screen):
         screen.blit(self.image, self.rect.topleft)  # Menggambar musuh ke layar
+        self.draw_line(screen)  # Menggambar tali layangan
 
 # Player and enemies initialization
 player = Player(layangan_image[layangan_selected], SCREEN_WIDTH//2, SCREEN_HEIGHT//3)  # Initial position
@@ -274,18 +296,18 @@ running = True
 clock = pg.time.Clock()
 
 while running:
-    dt = clock.tick(60)  # Mengatur game berjalan pada 60 FPS dan mendapatkan waktu yang berlalu sejak frame terakhir
+    dt = clock.tick(60)
     for event in pg.event.get():
         if event.type == pg.QUIT:
             running = False
 
         if game_state == "kite_selection":
             if event.type == pg.KEYDOWN:
-                if event.key == pg.K_LEFT or event.key == pg.K_a:  # Pindah ke layangan sebelumnya
+                if event.key == pg.K_LEFT or event.key == pg.K_a:
                     layangan_selected = (layangan_selected - 1) % len(layangan_image)
-                elif event.key == pg.K_RIGHT or event.key == pg.K_d:  # Pindah ke layangan berikutnya
+                elif event.key == pg.K_RIGHT or event.key == pg.K_d:
                     layangan_selected = (layangan_selected + 1) % len(layangan_image)
-                elif event.key == pg.K_SPACE:  # Konfirmasi pilihan dan mulai game
+                elif event.key == pg.K_SPACE: 
                     player = Player(layangan_image[layangan_selected], SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
                     game_state = "playing"
 
@@ -332,6 +354,11 @@ while running:
         player.draw(screen)  # Gambar pemain
         player.update(mouse_pos)  # Pembaruan posisi pemain menggunakan mouse mouse
         enemies.draw(screen)  # Gambar semua musuh
+        # Misalkan 'enemies' adalah grup sprite untuk musuh
+        for enemy in enemies:
+            enemy.update()  # Memperbarui posisi musuh
+            enemy.draw(screen)  # Menggambar musuh dan tali
+
         enemies.update()  # Pembaruan status musuh
         player.draw_health(screen)  # Gambar kesehatan pemain
         # draw_mission_status()

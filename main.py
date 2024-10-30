@@ -64,7 +64,7 @@ layangan_image = [
 layangan_selected = 0  # Layangan Default
 
 def draw_kite_selection():
-    font = pg.font.SysFont(None, 40)
+    font = pg.font.Font(".\\assets\\fonts\\Wigglye.ttf", 40)
     select_text = font.render('Pilih Layangan', True, (BLACK))
     left_arrow = font.render('<', True, (BLACK))
     right_arrow = font.render('>', True, (BLACK))
@@ -84,14 +84,14 @@ def draw_kite_selection():
 
 def draw_start_menu():
     # screen.blit(start_menu_image, (0, 0))
-    font = pg.font.SysFont(None, 40)
+    font = pg.font.Font(".\\assets\\fonts\\Wigglye.ttf", 48)
     title = font.render('Perang Layangan', True, (BLACK))
     start_button = font.render('Mulai', True, (BLACK))
     screen.blit(title, (SCREEN_WIDTH / 2 - title.get_width() / 2, SCREEN_HEIGHT / 2 - title.get_height() / 2 - 20))
     screen.blit(start_button, (SCREEN_WIDTH / 2 - start_button.get_width() / 2, SCREEN_HEIGHT / 2 + start_button.get_height() / 2 + 20))
 
 def draw_game_over_screen():  # Fungsi untuk menampilkan menu game over
-    font = pg.font.SysFont(None, 40)
+    font = pg.font.Font(".\\assets\\fonts\\Wigglye.ttf", 40)
     title = font.render('GAME OVER', True, (BLACK))
     restart_button = font.render('R - Restart', True, (BLACK))
     quit_button = font.render('Q - Quit', True, (BLACK))
@@ -101,7 +101,7 @@ def draw_game_over_screen():  # Fungsi untuk menampilkan menu game over
     pg.display.update()
 
 def draw_winner_screen():  # Fungsi untuk menampilkan menu game over
-    font = pg.font.SysFont(None, 40)
+    font = pg.font.Font(".\\assets\\fonts\\Wigglye.ttf", 40)
     title = font.render('WINNER', True, (BLACK))
     restart_button = font.render('R - Restart', True, (BLACK))
     quit_button = font.render('Q - Quit', True, (BLACK))
@@ -111,14 +111,14 @@ def draw_winner_screen():  # Fungsi untuk menampilkan menu game over
     pg.display.update()
 
 def draw_mission_status():
-    font = pg.font.SysFont(None, 24)
+    font = pg.font.Font(".\\assets\\fonts\\Wigglye.ttf", 32)
     mission_text = font.render(f'Potong {mission_target} layangan musuh!', True, (BLACK))
     enemies_cut_text = font.render(f'Layangan Musuh Dipotong: {enemies_cut}/{mission_target}', True, (BLACK))
-    font = pg.font.SysFont(None, 48)
+    font = pg.font.Font(".\\assets\\fonts\\Wigglye.ttf", 48)
     time_text = font.render(f'{time_remaining:.1f}', True, (BLACK))
     
-    screen.blit(mission_text, (10, 40))
-    screen.blit(enemies_cut_text, (10, 70))
+    screen.blit(mission_text, (20, 50))
+    screen.blit(enemies_cut_text, (20, 90))
     screen.blit(time_text, (SCREEN_WIDTH//2, SCREEN_HEIGHT//10))
 
 # Class Player
@@ -212,10 +212,10 @@ class Player(pg.sprite.Sprite):
         return False  # Player masih hidup
 
     def draw_health(self, screen):
-        font = pg.font.SysFont(None, 24)
+        font = pg.font.Font(".\\assets\\fonts\\Wigglye.ttf", 32)
         color = BLACK if self.health > 30 else RED
         health_text = font.render(f'Health: {self.health}', True, color)
-        screen.blit(health_text, (10, 10))
+        screen.blit(health_text, (20, 10))
 
     def draw_line(self, screen):
         # Menggambar garis dari titik bawah layangan ke posisi lebih rendah

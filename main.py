@@ -10,11 +10,13 @@ screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))  # Konfigurasi ukura
 pg.display.set_caption("Perang Layangan")  # Konfigurasi nama jendela game
 
 # Memanggil file gambar background
-background_image = pg.image.load(".\\assets\\images\\Clouds5\\1.png")  
-moon_sprite = pg.image.load(".\\assets\\images\\Clouds5\\2.png")  
-cloud1_sprite = pg.image.load(".\\assets\\images\\Clouds5\\4.png")  
-cloud2_sprite = pg.image.load(".\\assets\\images\\Clouds5\\5.png")  
-cloud_moving_sprite = pg.image.load(".\\assets\\images\\Clouds5\\3.png")  
+background_image = pg.image.load(".\\assets\\images\\Morning\\1.png")
+moon_sprite = pg.image.load(".\\assets\\images\\Morning\\2.png")  
+cloud1_sprite = pg.image.load(".\\assets\\images\\Morning\\4.png")  
+cloud2_sprite = pg.image.load(".\\assets\\images\\Morning\\5.png")  
+cloud_moving_sprite = pg.image.load(".\\assets\\images\\Morning\\3.png")
+
+# start_menu_image = pg.image.load(".\\assets\\images\\Other\\menu.jpg")
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -26,7 +28,9 @@ background_image = pg.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HE
 moon_sprite = pg.transform.scale(moon_sprite, (SCREEN_WIDTH, SCREEN_HEIGHT))  
 cloud1_sprite = pg.transform.scale(cloud1_sprite, (SCREEN_WIDTH, SCREEN_HEIGHT))  
 cloud2_sprite = pg.transform.scale(cloud2_sprite, (SCREEN_WIDTH, SCREEN_HEIGHT))  
-cloud_moving_sprite = pg.transform.scale(cloud_moving_sprite, (SCREEN_WIDTH, SCREEN_HEIGHT))  
+cloud_moving_sprite = pg.transform.scale(cloud_moving_sprite, (SCREEN_WIDTH, SCREEN_HEIGHT))
+
+# start_menu_image = pg.transform.scale(start_menu_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
 
 cloud_moving_x = -cloud_moving_sprite.get_width()  
 cloud_moving_y = ran.randint(0, 100)
@@ -37,15 +41,17 @@ bgm.set_volume(0.5)
 bgm.play(-1)  # Memainkan musik secara loop
 
 game_over_sound = pg.mixer.Sound(".\\assets\\music\\game_over.mp3")
+game_over_sound.set_volume(1)
 wind_sound = pg.mixer.Sound(".\\assets\\music\\wind_sound.mp3")
+select_sound = pg.mixer.Sound(".\\assets\\music\\select.mp3")
 
 game_state = "start_menu"  # Atur game_state ke "start_menu"
 
-# # Menambahkan variabel untuk misi
-# mission_target = 5  # Jumlah layangan musuh yang harus dipotong
-# mission_time_limit = 30  # Batas waktu misi dalam detik
-# time_remaining = mission_time_limit  # Waktu yang tersisa
-# enemies_cut = 0  # Jumlah layangan musuh yang dipotong
+# Menambahkan variabel untuk misi
+mission_target = 5  # Jumlah layangan musuh yang harus dipotong
+mission_time_limit = 60  # Batas waktu misi dalam detik
+time_remaining = mission_time_limit  # Waktu yang tersisa
+enemies_cut = 0  # Jumlah layangan musuh yang dipotong
 
 # Memanggil file sprite layangan    
 layangan_image = [
@@ -77,12 +83,13 @@ def draw_kite_selection():
     pg.display.update()
 
 def draw_start_menu():
+    # screen.blit(start_menu_image, (0, 0))
     font = pg.font.SysFont(None, 40)
     title = font.render('Perang Layangan', True, (BLACK))
     start_button = font.render('Mulai', True, (BLACK))
     screen.blit(title, (SCREEN_WIDTH / 2 - title.get_width() / 2, SCREEN_HEIGHT / 2 - title.get_height() / 2 - 20))
     screen.blit(start_button, (SCREEN_WIDTH / 2 - start_button.get_width() / 2, SCREEN_HEIGHT / 2 + start_button.get_height() / 2 + 20))
- 
+
 def draw_game_over_screen():  # Fungsi untuk menampilkan menu game over
     font = pg.font.SysFont(None, 40)
     title = font.render('GAME OVER', True, (BLACK))
@@ -103,16 +110,16 @@ def draw_winner_screen():  # Fungsi untuk menampilkan menu game over
     screen.blit(quit_button, (SCREEN_WIDTH/2 - quit_button.get_width()/2, SCREEN_HEIGHT/2 + quit_button.get_height()/2))
     pg.display.update()
 
-
-# def draw_mission_status():
-#     font = pg.font.SysFont(None, 24)
-#     mission_text = font.render(f'Potong {mission_target} layangan musuh!', True, (BLACK))
-#     time_text = font.render(f'Waktu Tersisa: {time_remaining:.1f} detik', True, (BLACK))
-#     enemies_cut_text = font.render(f'Layangan Musuh Dipotong: {enemies_cut}/{mission_target}', True, (BLACK))
+def draw_mission_status():
+    font = pg.font.SysFont(None, 24)
+    mission_text = font.render(f'Potong {mission_target} layangan musuh!', True, (BLACK))
+    enemies_cut_text = font.render(f'Layangan Musuh Dipotong: {enemies_cut}/{mission_target}', True, (BLACK))
+    font = pg.font.SysFont(None, 48)
+    time_text = font.render(f'{time_remaining:.1f}', True, (BLACK))
     
-#     screen.blit(mission_text, (10, 40))
-#     screen.blit(time_text, (10, 70))
-#     screen.blit(enemies_cut_text, (10, 100))
+    screen.blit(mission_text, (10, 40))
+    screen.blit(enemies_cut_text, (10, 70))
+    screen.blit(time_text, (SCREEN_WIDTH//2, SCREEN_HEIGHT//10))
 
 # Class Player
 class Player(pg.sprite.Sprite):
@@ -224,16 +231,20 @@ class Player(pg.sprite.Sprite):
         image_to_draw = pg.transform.flip(self.image, True, False) if self.facing_left else self.image
         screen.blit(image_to_draw, self.rect.topleft)
         self.draw_line(screen)  # Menggambar tali layangan
+        self.draw_health(screen)
 
-# Kelas untuk layangan
+# Kelas untuk layangan Musuh
 class Enemy(pg.sprite.Sprite):
     def __init__(self, image):
+        
         super().__init__()
         self.image = pg.transform.scale(image, (50, 50))  # Mengubah ukuran gambar
         self.rect = self.image.get_rect()
         self.rect.y = ran.randint(0, SCREEN_HEIGHT - 75)  # Posisi acak untuk y
         self.speed = ran.randint(1, 5)  # Kecepatan acak
         self.health = 50
+        self.wind_speed = ran.randint(0, 5)
+        self.wind_direction = ran.choice([-1, 1])
 
         # Tentukan arah awal: 1 untuk ke kanan, -1 untuk ke kiri
         self.direction = ran.choice([-1, 1])
@@ -253,10 +264,13 @@ class Enemy(pg.sprite.Sprite):
         else:
             # Jika health habis, musuh jatuh ke bawah
             self.rect.y += 5  # Gerak jatuh layangan jika health habis
+            self.rect.x += self.wind_speed * self.wind_direction
+            self.kill()
 
     def take_damage(self, dmg):
         self.health -= dmg
         if self.health <= 0:
+            # self.kill()
             self.speed = 0  # Berhenti gerak horizontal jika nyawa habis
             return True
         return False
@@ -296,18 +310,23 @@ class Enemy(pg.sprite.Sprite):
         self.draw_line(screen)  # Menggambar tali layangan jika health > 0 
 
 def check_collisions(player, enemies):
+    global enemies_cut, time_remaining
     player_line_start = (player.rect.centerx - 15, player.rect.bottom - 10) if player.facing_left else (player.rect.centerx + 15, player.rect.bottom - 10)
     player_line_end = (player.rect.centerx, player.rect.bottom + 10)
 
     for enemy in enemies:
         if enemy.check_collision_with_line(player_line_start, player_line_end):
-            player_damage = 1
+            player_damage = ran.randint(1, 2)
             enemy_damage = ran.randint(1, 10)
 
             if player.take_damage(player_damage):
                 return "player_dead"
             if enemy.take_damage(enemy_damage):
-                print("Enemy's line broke!")
+                time_remaining += 30
+                enemies_cut += 1
+                print("Enemy's Line Broke")
+                print(f"Enemies cut: {enemies_cut}")
+                break
     return "continue"
 
 # Fungsi untuk memeriksa apakah semua musuh sudah dikalahkan
@@ -315,19 +334,11 @@ def check_all_enemies_defeated(enemies):
     for enemy in enemies:
         if enemy.health > 0:  # Masih ada musuh yang hidup
             return False
+    # pg.time.wait(2000)
     return True  # Semua musuh sudah kalah
-
-# Player and enemies initialization
-player = Player(layangan_image[layangan_selected], SCREEN_WIDTH//2, SCREEN_HEIGHT//3)  # Initial position
-enemies = pg.sprite.Group()  # Mengelompokkan semua musuh
 
 # Menambahkan beberapa musuh ke dalam kelompok enemies
 enemies = pg.sprite.Group()
-# Menambahkan beberapa musuh
-for _ in range(5):  # Menambahkan 5 musuh
-    enemy = Enemy(layangan_image[ran.randint(0, 3)])
-    enemies.add(enemy)
-
 running = True
 
 # Clock pygame
@@ -335,150 +346,102 @@ clock = pg.time.Clock()
 
 while running:
     dt = clock.tick(60)
+
+    # Menggambar semua elemen latar belakang di layar
+    screen.blit(background_image, (0, 0))  # Menggambar latar belakang
+    screen.blit(cloud1_sprite, (0, 0))  # Menggambar awan statis
+    screen.blit(cloud2_sprite, (0, 0))  # Menggambar awan statis
+
     for event in pg.event.get():
         if event.type == pg.QUIT:
             running = False
 
-        if game_state == "kite_selection":
+        # Start Menu
+        if game_state == "start_menu":
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_SPACE:
+                    game_state = "kite_selection"
+        
+        # Kite Selection
+        elif game_state == "kite_selection":
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_LEFT or event.key == pg.K_a:
                     layangan_selected = (layangan_selected - 1) % len(layangan_image)
+                    select_sound.play()
                 elif event.key == pg.K_RIGHT or event.key == pg.K_d:
                     layangan_selected = (layangan_selected + 1) % len(layangan_image)
-                elif event.key == pg.K_SPACE: 
-                    # Inisialisasi pemain dan mulai permainan
+                    select_sound.play()
+                elif event.key == pg.K_SPACE:
                     player = Player(layangan_image[layangan_selected], SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
                     game_state = "playing"
-                    # Reset musuh
-                    enemies.empty()  # Hapus semua musuh
-                    for _ in range(5):  # Spawn 5 musuh baru
+                    enemies_cut = 0
+                    time_remaining = mission_time_limit
+                    enemies.empty()
+                    for _ in range(mission_target): 
                         enemy = Enemy(layangan_image[ran.randint(0, 3)])
                         enemies.add(enemy)
 
-    if game_state == "kite_selection":
-        draw_kite_selection()  # Terus gambar layangan di setiap frame
-        
-    # Jika game dalam keadaan game_over
-    if game_state == "game_over":
-        draw_game_over_screen()  # Gambar layar game over
-
-        for event in pg.event.get():
+        # Game Over or Winner Screen
+        elif game_state in ["game_over", "winner"]:
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_r:
-                    # Restart game
-                    player = Player(layangan_image[layangan_selected], SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)  # Reset player
-                    enemies.empty()  # Hapus semua musuh
-                    # Tambahkan musuh baru
-                    for _ in range(5):
-                        enemy = Enemy(layangan_image[ran.randint(0, 3)])
-                        enemies.add(enemy)
-                    game_state = "playing"  # Kembali ke permainan
+                    game_state = "kite_selection"
                 elif event.key == pg.K_q:
-                    pg.quit()
+                    running = False
 
-    # Jika game dalam keadaan game_over
-    if game_state == "winner":
-        draw_winner_screen()  # Gambar layar game over
+    # Menggambar berdasarkan game state
+    if game_state == "start_menu":
+        draw_start_menu()
+    elif game_state == "kite_selection":
+        draw_kite_selection()
+    elif game_state == "playing":
+        wind_sound.play(-1)  # Pastikan suara hanya dimainkan sekali dalam game state ini
 
-        for event in pg.event.get():
-            if event.type == pg.KEYDOWN:
-                if event.key == pg.K_r:
-                    # Restart game
-                    player = Player(layangan_image[layangan_selected], SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)  # Reset player
-                    enemies.empty()  # Hapus semua musuh
-                    # Tambahkan musuh baru
-                    for _ in range(5):
-                        enemy = Enemy(layangan_image[ran.randint(0, 3)])
-                        enemies.add(enemy)
-                    game_state = "playing"  # Kembali ke permainan
-                elif event.key == pg.K_q:
-                    pg.quit()
-
-    # Kontrol untuk pemain
-    if game_state == "playing":
-        wind_sound.play(-1)
+        # Kontrol untuk pemain dan pembaruan permainan
         mouse_pos = pg.mouse.get_pos()
         keys = pg.key.get_pressed()
-        # Jika ingin menggunakan keyboard
-        # if keys[pg.K_LEFT] or keys[pg.K_a]:
-        #     player.move_left()
-        #     player.facing_left = True  # Update arah pemain
-        # if keys[pg.K_RIGHT] or keys[pg.K_d]:
-        #     player.move_right()
-        #     player.facing_left = False  # Update arah pemain
+        
         if keys[pg.K_SPACE] or keys[pg.K_w]:
-            player.jump()  # Melompat jika spasi ditekan
+            player.jump()
         else:
-            player.is_jumping = False  # Set pemain tidak dalam keadaan melompat jika spasi tidak ditekan
+            player.is_jumping = False
 
-        # Update dan gambar player
+        player.update(mouse_pos)  # Update posisi pemain
         player.draw(screen)  # Gambar pemain
-        player.update(mouse_pos)  # Pembaruan posisi pemain menggunakan mouse mouse
+        for enemy in enemies:
+            enemy.update()
+            enemy.draw(screen)
+        enemies.update()  # Update posisi musuh
         enemies.draw(screen)  # Gambar semua musuh
 
-        # Misalkan 'enemies' adalah grup sprite untuk musuh
-        for enemy in enemies:
-            enemy.update()  # Memperbarui posisi musuh
-            enemy.draw(screen)  # Menggambar musuh dan tali
-        
+        # Cek tabrakan antara pemain dan musuh
         collision_result = check_collisions(player, enemies)
         if collision_result == "player_dead":
             game_state = "game_over"
             game_over_sound.play()
             print("Game Over! Player's health reached zero.")
 
-                # Cek apakah semua musuh telah dikalahkan
+        # Cek apakah semua musuh telah dikalahkan
         if check_all_enemies_defeated(enemies):
-            game_state = "winner"  # Set game state menjadi game over jika semua musuh kalah
+            print("All enemies defeated!")
+            game_state = "winner"
             game_over_sound.play()
 
-        enemies.update()  # Pembaruan status musuh
-        player.draw_health(screen)  # Gambar kesehatan pemain
-        # draw_mission_status()
+        draw_mission_status()
 
         # Hitung waktu yang tersisa untuk misi
-        # if time_remaining > 0:
-        #     time_remaining -= clock.tick(60) / 100  # Kurangi waktu berdasarkan frame rate
-        # else:
-        #     game_over_sound.play()  # Suara game over
-        #     game_state = "game_over"
+        if time_remaining > 0:
+            time_remaining -= clock.tick(60) / 100  # Kurangi waktu berdasarkan frame rate
+        else:
+            game_state = "game_over"
+            game_over_sound.play()  # Suara game over
 
-    pg.display.flip()  # Perbarui layar
-
-    # Menggambar semua elemen di layar
-    screen.blit(background_image, (0, 0))  # Menggambar latar belakang
-    screen.blit(cloud1_sprite, (0, 0))  # Menggambar awan statis
-    screen.blit(cloud2_sprite, (0, 0))  # Menggambar awan statis
-
-    # Menggambar awan bergerak
-    cloud_moving_x += cloud_speed
-    if cloud_moving_x > SCREEN_WIDTH:
-        cloud_moving_x = -cloud_moving_sprite.get_width()  # Reset posisi awan saat keluar layar
-    screen.blit(cloud_moving_sprite, (cloud_moving_x, cloud_moving_y))  # Menggambar awan yang bergerak
-
-    player.draw(screen)  # Menggambar pemain
-    enemies.draw(screen)  # Menggambar musuh
-
-    # Menampilkan menu awal
-    keys = pg.key.get_pressed()
-    if game_state == "start_menu":
-        # time_remaining = mission_time_limit
-        draw_start_menu()
-        if keys[pg.K_SPACE]:
-            game_state = "kite_selection"
     elif game_state == "game_over":
-        if keys[pg.K_r]:
-            game_state = "start_menu"
-        if keys[pg.K_q]:
-            pg.quit()
-            quit()
+        draw_game_over_screen()
+
     elif game_state == "winner":
-        if keys[pg.K_r]:
-            game_state = "start_menu"
-        if keys[pg.K_q]:
-            pg.quit()
-            quit()
+        draw_winner_screen()
 
-    pg.display.update()  # Refresh layar
+    pg.display.flip()  # Refresh layar
 
-pg.quit()  # Menghentikan pygame
+pg.quit()

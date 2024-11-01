@@ -37,13 +37,15 @@ cloud_moving_y = ran.randint(0, 100)
 cloud_speed = 1  # Kecepatan gerak gambar awan
 
 bgm = pg.mixer.Sound(".\\assets\\music\\menu_music.mp3")  # Memanggil file musik
-bgm.set_volume(0.5)
+bgm.set_volume(0.3)
 bgm.play(-1)  # Memainkan musik secara loop
 
 game_over_sound = pg.mixer.Sound(".\\assets\\music\\game_over.mp3")
 game_over_sound.set_volume(1)
 wind_sound = pg.mixer.Sound(".\\assets\\music\\wind_sound.mp3")
+wind_sound.set_volume(1)
 select_sound = pg.mixer.Sound(".\\assets\\music\\select.mp3")
+select_sound.set_volume(0.5)
 
 game_state = "start_menu"  # Atur game_state ke "start_menu"
 
